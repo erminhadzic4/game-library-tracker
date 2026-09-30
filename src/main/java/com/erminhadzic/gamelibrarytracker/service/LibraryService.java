@@ -2,6 +2,7 @@ package com.erminhadzic.gamelibrarytracker.service;
 
 import com.erminhadzic.gamelibrarytracker.dto.AddLibraryEntryRequest;
 import com.erminhadzic.gamelibrarytracker.dto.LibraryEntryResponse;
+import com.erminhadzic.gamelibrarytracker.dto.LibraryStatsResponse;
 import com.erminhadzic.gamelibrarytracker.dto.UpdateLibraryEntryRequest;
 import com.erminhadzic.gamelibrarytracker.model.Game;
 import com.erminhadzic.gamelibrarytracker.model.LibraryEntry;
@@ -63,9 +64,26 @@ public class LibraryService {
     public List<LibraryEntryResponse> getEntries(String username, LibraryEntry.Status status) {
         User user = getUser(username);
         List<LibraryEntry> entries = (status == null)
-                ? libraryEntryRepository.findByUser(user)
-                : libraryEntryRepository.findByUserAndStatus(user, status);
+                ? libraryEntryRepository.findByUserOrderByAddedAtDesc(user)
+                : libraryEntryRepository.findByUserAndStatusOrderByAddedAtDesc(user, status);
         return entries.stream().map(LibraryEntryResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public LibraryStatsResponse getStats(String username) {
+        User user = getUser(username);
+        long playing = libraryEntryRepository.countByUserAndStatus(user, LibraryEntry.Status.PLAYING);
+        long backlog = libraryEntryRepository.countByUserAndStatus(user, LibraryEntry.Status.BACKLOG);
+        long completed = libraryEntryRepository.countByUserAndStatus(user, LibraryEntry.Status.COMPLETED);
+        Double average = libraryEntryRepository.findAverageRatingByUser(user);
+        // Round to one decimal place (e.g. 8.333 -> 8.3); stays null when nothing is rated
+        Double roundedAverage = (average == null) ? null : Math.round(average * 10) / 10.0;
+        return new LibraryStatsResponse(
+                playing + backlog + completed,
+                playing,
+                backlog,
+                completed,
+                roundedAverage);
     }
 
     @Transactional

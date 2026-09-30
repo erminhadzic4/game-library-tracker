@@ -2,6 +2,7 @@ package com.erminhadzic.gamelibrarytracker.controller;
 
 import com.erminhadzic.gamelibrarytracker.dto.AddLibraryEntryRequest;
 import com.erminhadzic.gamelibrarytracker.dto.LibraryEntryResponse;
+import com.erminhadzic.gamelibrarytracker.dto.LibraryStatsResponse;
 import com.erminhadzic.gamelibrarytracker.dto.UpdateLibraryEntryRequest;
 import com.erminhadzic.gamelibrarytracker.model.LibraryEntry;
 import com.erminhadzic.gamelibrarytracker.service.LibraryService;
@@ -33,6 +34,11 @@ public class LibraryController {
     public List<LibraryEntryResponse> list(@AuthenticationPrincipal UserDetails user,
                                            @RequestParam(required = false) LibraryEntry.Status status) {
         return libraryService.getEntries(user.getUsername(), status);
+    }
+
+    @GetMapping("/stats")
+    public LibraryStatsResponse stats(@AuthenticationPrincipal UserDetails user) {
+        return libraryService.getStats(user.getUsername());
     }
 
     @PatchMapping("/{id}")
