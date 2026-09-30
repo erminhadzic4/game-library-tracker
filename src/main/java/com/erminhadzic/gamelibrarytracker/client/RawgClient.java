@@ -1,6 +1,5 @@
 package com.erminhadzic.gamelibrarytracker.client;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -10,12 +9,11 @@ public class RawgClient {
     private final RestClient restClient;
     private final String apiKey;
 
-    public RawgClient(@Value("${rawg.base-url}") String baseUrl,
-                      @Value("${rawg.api-key}") String apiKey) {
+    public RawgClient(RawgProperties properties) {
         this.restClient = RestClient.builder()
-                .baseUrl(baseUrl)
+                .baseUrl(properties.baseUrl())
                 .build();
-        this.apiKey = apiKey;
+        this.apiKey = properties.apiKey();
     }
 
     // Calls GET {base-url}/games?search={query}&search_precise=true&key={api-key} and returns the JSON body as-is.
