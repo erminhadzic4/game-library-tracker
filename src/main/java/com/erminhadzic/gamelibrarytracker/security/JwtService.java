@@ -5,7 +5,6 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -18,11 +17,10 @@ public class JwtService {
     private final SecretKey signingKey;
     private final long expirationMs;
 
-    public JwtService(@Value("${jwt.secret}") String secret,
-                      @Value("${jwt.expiration-ms}") long expirationMs) {
+    public JwtService(JwtProperties properties) {
         // Throws WeakKeyException at startup if the key is shorter than 256 bits
-        this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
-        this.expirationMs = expirationMs;
+        this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(properties.secret()));
+        this.expirationMs = properties.expirationMs();
     }
 
     public String generateToken(String username) {
