@@ -21,33 +21,36 @@ export function Layout() {
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
-        <div className={styles.brand}>
-          <span className={styles.logo}>
-            <LogoIcon size={20} />
-          </span>
-          Game Library
-        </div>
-
-        <nav className={styles.nav}>
-          <NavLink to="/library" className={linkClass}>
-            <GridIcon size={20} />
-            Library
-          </NavLink>
-          <NavLink to="/search" className={linkClass}>
-            <SearchIcon size={20} />
-            Search
-          </NavLink>
-        </nav>
-
-        <div className={styles.user}>
-          <span className={styles.avatar}>{username?.charAt(0).toUpperCase()}</span>
-          <div className={styles.userText}>
-            <span className={styles.username}>{username}</span>
-            <span className={styles.gameCount}>{gameCount}</span>
+        {/* The aside is the full-height coloured column; this inner box is the part that stays in view */}
+        <div className={styles.sidebarContent}>
+          <div className={styles.brand}>
+            <span className={styles.logo}>
+              <LogoIcon size={20} />
+            </span>
+            Game Library
           </div>
-          <button type="button" className={styles.logout} onClick={logout} aria-label="Log out" title="Log out">
-            <LogoutIcon />
-          </button>
+
+          <nav className={styles.nav}>
+            <NavLink to="/library" className={linkClass}>
+              <GridIcon size={20} />
+              Library
+            </NavLink>
+            <NavLink to="/search" className={linkClass}>
+              <SearchIcon size={20} />
+              Search
+            </NavLink>
+          </nav>
+
+          <div className={styles.user}>
+            <span className={styles.avatar}>{username?.charAt(0).toUpperCase()}</span>
+            <div className={styles.userText}>
+              <span className={styles.username}>{username}</span>
+              <span className={styles.gameCount}>{gameCount}</span>
+            </div>
+            <button type="button" className={styles.logout} onClick={logout} aria-label="Log out" title="Log out">
+              <LogoutIcon />
+            </button>
+          </div>
         </div>
       </aside>
 

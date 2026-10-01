@@ -4,8 +4,16 @@
   min-height: 100vh;
 }
 
-/* sticky + full height: the sidebar stays in place while the page scrolls */
+/* The sidebar column itself is as tall as the whole page (grid items stretch by default),
+   so its background and border always reach the bottom, however long the content is */
 .sidebar {
+  border-right: 1px solid var(--border-soft);
+  background: var(--sidebar-bg);
+}
+
+/* What is inside it is one window tall and sticks to the top, so the logo, the navigation
+   and the user block stay in view while the main content scrolls */
+.sidebarContent {
   position: sticky;
   top: 0;
   display: flex;
@@ -13,8 +21,6 @@
   gap: 32px;
   height: 100vh;
   padding: 28px 20px;
-  border-right: 1px solid var(--border-soft);
-  background: var(--sidebar-bg);
 }
 
 .brand {
