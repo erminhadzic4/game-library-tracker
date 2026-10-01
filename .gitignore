@@ -13,6 +13,7 @@
 .claude/
 CLAUDE.md
 target/
+design-mockup/
 
 # Package Files #
 *.jar

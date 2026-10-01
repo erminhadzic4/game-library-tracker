@@ -1,6 +1,6 @@
 # game-library-tracker
 
-A Spring Boot REST API for tracking the video games you own or want to play, with game data from the [RAWG API](https://rawg.io/apidocs).
+A web app for tracking the video games you own or want to play, with game data from the [RAWG API](https://rawg.io/apidocs). It has two parts: a Spring Boot REST API (this folder) and a React frontend (`frontend/`).
 
 ## Running locally
 
