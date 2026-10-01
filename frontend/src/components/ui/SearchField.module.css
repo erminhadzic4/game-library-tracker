@@ -1,0 +1,51 @@
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: text;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-ring);
+}
+
+.field svg {
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-h);
+  font-size: 15px;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.large {
+  gap: 14px;
+  height: 60px;
+  padding: 0 20px;
+  border-radius: 16px;
+}
+
+.large .input {
+  font-size: 18px;
+}

@@ -1,0 +1,51 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-label);
+}
+
+.control {
+  position: relative;
+}
+
+.select {
+  /* Hides the browser's own arrow; the chevron icon replaces it */
+  appearance: none;
+  width: 100%;
+  height: 44px;
+  padding: 0 38px 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-h);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-ring);
+}
+
+.chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  display: flex;
+  transform: translateY(-50%);
+  color: var(--text);
+  /* Clicks go through the icon to the select under it */
+  pointer-events: none;
+}

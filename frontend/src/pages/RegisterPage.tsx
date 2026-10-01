@@ -3,7 +3,12 @@ import type { FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { ApiError, register as registerRequest } from '../api'
 import { useAuth } from '../auth/AuthContext'
-import styles from './AuthForm.module.css'
+import { AuthLayout } from '../components/AuthLayout'
+import { Button } from '../components/ui/Button'
+import { ErrorBox } from '../components/ui/ErrorBox'
+import { ArrowRightIcon, MailIcon, UserIcon } from '../components/ui/icons'
+import { PasswordInput } from '../components/ui/PasswordInput'
+import { TextInput } from '../components/ui/TextInput'
 
 export function RegisterPage() {
   const { token, login } = useAuth()
@@ -25,7 +30,7 @@ export function RegisterPage() {
     try {
       // Register returns a token, so the user is logged in straight away
       const response = await registerRequest({ username, email, password })
-      login(response.token)
+      login(response.token, username)
       navigate('/library', { replace: true })
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
@@ -41,35 +46,45 @@ export function RegisterPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <h1>Register</h1>
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <label className={styles.field}>
-          Username
-          <input value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" required />
-        </label>
-        <label className={styles.field}>
-          Email
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
-        </label>
-        <label className={styles.field}>
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password"
-            required
-          />
-        </label>
-        {error && <p className={styles.error}>{error}</p>}
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Registering…' : 'Register'}
-        </button>
-      </form>
-      <p className={styles.switch}>
-        Already have an account? <Link to="/login">Log in</Link>
-      </p>
-    </div>
+    <AuthLayout
+      title="Create your account"
+      subtitle="Start tracking your games in a minute."
+      onSubmit={handleSubmit}
+      footer={
+        <>
+          Already have an account? <Link to="/login">Log in</Link>
+        </>
+      }
+    >
+      <TextInput
+        label="Username"
+        icon={<UserIcon />}
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        autoComplete="username"
+        required
+      />
+      <TextInput
+        label="Email"
+        type="email"
+        icon={<MailIcon />}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        autoComplete="email"
+        required
+      />
+      <PasswordInput
+        label="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        autoComplete="new-password"
+        required
+      />
+      {error && <ErrorBox>{error}</ErrorBox>}
+      <Button type="submit" fullWidth loading={submitting}>
+        {submitting ? 'Registering…' : 'Create account'}
+        {!submitting && <ArrowRightIcon />}
+      </Button>
+    </AuthLayout>
   )
 }

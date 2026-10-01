@@ -1,20 +1,38 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { clearToken, getToken, saveToken, setUnauthorizedHandler } from '../api'
+import { clearSession, getToken, getUsername, saveSession, setUnauthorizedHandler } from '../api'
 import { AuthContext } from './AuthContext'
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  // Start from localStorage so a page refresh keeps the user logged in
-  const [token, setToken] = useState<string | null>(getToken)
+interface Session {
+  token: string | null
+  username: string | null
+}
 
-  const login = useCallback((newToken: string) => {
-    saveToken(newToken)
-    setToken(newToken)
+const LOGGED_OUT: Session = { token: null, username: null }
+
+// Reads the saved session from localStorage, so a page refresh keeps the user logged in
+function readSession(): Session {
+  const token = getToken()
+  const username = getUsername()
+  // A token without a username is a session saved before usernames were stored: log out, so the user logs in again
+  if (!token || !username) {
+    clearSession()
+    return LOGGED_OUT
+  }
+  return { token, username }
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState<Session>(readSession)
+
+  const login = useCallback((token: string, username: string) => {
+    saveSession(token, username)
+    setSession({ token, username })
   }, [])
 
   const logout = useCallback(() => {
-    clearToken()
-    setToken(null)
+    clearSession()
+    setSession(LOGGED_OUT)
   }, [])
 
   // Lets api.ts log the user out when the backend answers 401 (expired or invalid token)
@@ -22,7 +40,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUnauthorizedHandler(logout)
   }, [logout])
 
-  const value = useMemo(() => ({ token, login, logout }), [token, login, logout])
+  const value = useMemo(
+    () => ({ token: session.token, username: session.username, login, logout }),
+    [session, login, logout],
+  )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

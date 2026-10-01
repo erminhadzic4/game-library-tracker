@@ -1,6 +1,6 @@
 # game-library-tracker
 
-A Spring Boot REST API for tracking the video games you own or want to play, with game data from the [RAWG API](https://rawg.io/apidocs).
+A web app for tracking the video games you own or want to play, with game data from the [RAWG API](https://rawg.io/apidocs). It has two parts: a Spring Boot REST API (this folder) and a React frontend (`frontend/`).
 
 ## Running locally
 
@@ -27,7 +27,7 @@ Then start the app on port 8080:
 
 ## Frontend
 
-A React + TypeScript single-page app (Vite) lives in `frontend/`. It has four pages: Login, Register, Library (your games, with status, rating, notes and stats) and Search (find a game on RAWG and add it).
+A React + TypeScript single-page app (Vite) lives in `frontend/`. It has four pages: Login, Register, Library (your games, with status, rating, notes and stats) and Search (find a game on RAWG and add it; before you type, it shows "Popular right now" and "All-time greats" lists from `GET /api/games/discover`).
 
 Requirements: Node.js 20+ and the backend running on port 8080.
 
@@ -42,13 +42,19 @@ Then open http://localhost:5173. The dev server proxies every `/api` request to 
 How it works:
 
 - `src/api.ts` is the only place that calls `fetch`. It adds the `Authorization: Bearer <token>` header and logs the user out when the backend answers 401.
-- The token is kept in `localStorage` and shared with the pages through `AuthContext`.
+- The token and the username are kept in `localStorage` and shared with the pages through `AuthContext`.
 - `/library` and `/search` are protected routes: without a token they redirect to `/login`.
+- `LibraryProvider` loads the user's library once and shares it with the Library page, the Search page ("In library") and the sidebar (game count).
+- `src/components/ui/` holds the reusable building blocks (`Button`, `TextInput`, `GameCard`, `Drawer`, `Toast`…). Styling is plain CSS modules on top of the colour variables in `src/index.css`.
 - `src/types.ts` mirrors the backend DTOs.
 
 `npm run build` type-checks the code and writes a production build to `frontend/dist`. `npm run lint` runs ESLint.
 
 **Windows note:** Vite 8 bundles with Rolldown, which ships as an unsigned native binary. Windows Smart App Control blocks it ("An Application Control policy has blocked this file"). The npm scripts therefore set `NAPI_RS_FORCE_WASI=1`, which makes Rolldown use its WebAssembly build (`@rolldown/binding-wasm32-wasi`) instead. It behaves the same, only a little slower. Linting uses ESLint instead of the Vite template's default oxlint for the same reason: oxlint's native binary is blocked too and has no WebAssembly build, while ESLint is plain JavaScript.
+
+## Known limitations
+
+- **No box art.** RAWG doesn't provide box art: its `background_image` is a landscape screenshot or piece of key art. The game cards therefore use a 16:9 cover area. Real portrait covers would need another source, such as IGDB.
 
 ## Tests
 

@@ -1,101 +1,231 @@
-.stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 24px;
-  list-style: none;
-  padding: 12px 16px;
-  margin: 0 0 16px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.filter {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.error {
-  color: var(--danger);
-}
-
-.list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.card {
-  display: flex;
-  gap: 16px;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.cover {
-  width: 160px;
-  height: 90px;
-  flex-shrink: 0;
-  object-fit: cover;
-  border-radius: 4px;
-  background: var(--border);
-}
-
-.details {
-  flex: 1;
+/* 340px wide when there is room, narrower when the window is small */
+.search {
+  flex: 0 1 340px;
   min-width: 0;
 }
 
-.details h2 {
-  margin: 0;
-}
-
-.meta {
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+/* Five tiles in a row when they fit; on a narrow window they wrap onto a second row */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 16px;
-  margin-bottom: 8px;
 }
 
-.controls label {
-  display: inline-flex;
+/* A wrapper with display: contents takes no box of its own, so the tile inside stays a direct grid item */
+.desktopOnly {
+  display: contents;
+}
+
+.stats .statSkeleton {
+  height: 132px;
+  border-radius: 16px;
+}
+
+.splitBar {
+  display: flex;
+  gap: 3px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.splitBar div {
+  border-radius: 3px;
+}
+
+.splitPlaying {
+  background: var(--playing);
+}
+
+.splitBacklog {
+  background: var(--backlog);
+}
+
+.splitCompleted {
+  background: var(--completed);
+}
+
+.outOf {
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.noRating {
+  font-size: 20px;
+}
+
+.toolbar {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.remove {
-  margin-left: auto;
-  background: none;
-  border: 1px solid var(--danger);
-  color: var(--danger);
+.filters {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.filter {
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-label);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.filter:hover {
+  border-color: var(--text);
+}
+
+.filter:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
+.filterActive,
+.filterActive:hover {
+  border-color: var(--text-h);
+  background: var(--text-h);
+  color: var(--bg);
+  font-weight: 700;
+}
+
+.sort {
+  flex-shrink: 0;
+  width: 190px;
+}
+
+/* The buttons in the hover overlay of a card. "button" in front makes these win over the Button component's own styles. */
+button.editButton {
+  flex: 1;
+  min-width: 0;
+  padding: 0 8px;
+}
+
+.removeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--text-h);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.removeButton:hover {
+  background: var(--danger);
+}
+
+.removeButton:focus-visible {
+  outline: 2px solid var(--link);
+}
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.notesField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--text-label);
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .notes {
-  display: block;
-  width: 100%;
-  margin-bottom: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-h);
+  font-size: 15px;
+  font-weight: 400;
   resize: vertical;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
-@media (max-width: 600px) {
-  .card {
-    flex-direction: column;
+.notes:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-ring);
+}
+
+@media (max-width: 860px) {
+  .search {
+    flex: 1;
   }
 
-  .cover {
-    width: 100%;
-    height: 160px;
+  /* The tab bar already leads to Search */
+  button.addButton {
+    display: none;
+  }
+
+  .stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .desktopOnly,
+  .stats .statSkeleton:nth-child(n + 4) {
+    display: none;
+  }
+
+  .stats .statSkeleton {
+    height: 76px;
+    border-radius: 14px;
+  }
+
+  .outOf {
+    display: none;
+  }
+
+  .noRating {
+    font-size: 14px;
+    line-height: 1.2;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* The pills scroll sideways when they don't fit */
+  .filters {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .filter {
+    height: 36px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
+  .sort {
+    width: auto;
   }
 }

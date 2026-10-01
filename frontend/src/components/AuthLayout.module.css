@@ -1,0 +1,243 @@
+.page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* The background wall: tilted, blurred and darkened so it never competes with the form */
+.tiles {
+  position: absolute;
+  left: -120px;
+  top: -160px;
+  width: 1700px;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 16px;
+  transform: rotate(-8deg);
+  filter: blur(5px) brightness(0.5);
+}
+
+.tile {
+  display: flex;
+  align-items: flex-end;
+  height: 280px;
+  padding: 16px;
+  border-radius: 12px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* Darkens the wall, more so on the sides where the text and the form sit */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(11, 12, 16, 0.94) 0%, rgba(11, 12, 16, 0.7) 50%, rgba(11, 12, 16, 0.88) 100%);
+}
+
+.content {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 460px;
+  gap: 96px;
+  align-items: center;
+  min-height: 100vh;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 48px 128px;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 560px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--text-h);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+}
+
+.headline {
+  margin: 0;
+  font-weight: 700;
+  font-size: 68px;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 19px;
+  line-height: 1.6;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* .page in front makes these win over the Card component's own styles */
+.page .formCard {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 40px;
+  border-radius: 22px;
+  border-color: rgba(255, 255, 255, 0.09);
+  background: rgba(22, 24, 31, 0.62);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  border-radius: 9px;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.tab:hover {
+  color: var(--text-h);
+}
+
+.tabActive {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-h);
+}
+
+.title {
+  margin: 0 0 6px;
+  font-size: 28px;
+}
+
+.subtitle {
+  font-size: 15px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.footer {
+  text-align: center;
+  font-size: 15px;
+}
+
+/* Narrower desktops and tablets: same two columns, less empty space */
+@media (max-width: 1200px) {
+  .content {
+    gap: 48px;
+    padding: 48px;
+  }
+
+  .headline {
+    font-size: 52px;
+  }
+}
+
+/* Phones: one column, and the form sits straight on the page instead of in a card */
+@media (max-width: 860px) {
+  .tiles {
+    left: -60px;
+    top: -80px;
+    width: 520px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    filter: blur(3px) brightness(0.55);
+  }
+
+  .tile {
+    height: 170px;
+    font-size: 0;
+  }
+
+  .overlay {
+    background: linear-gradient(180deg, rgba(11, 12, 16, 0.35) 0, rgba(11, 12, 16, 0.85) 270px, var(--bg) 400px);
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 28px;
+    max-width: 520px;
+    padding: 72px 24px 32px;
+  }
+
+  .intro {
+    gap: 0;
+  }
+
+  .brand {
+    font-size: 17px;
+  }
+
+  .logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+  }
+
+  .headline {
+    margin-top: 64px;
+    font-size: 40px;
+    line-height: 1.05;
+  }
+
+  .lede,
+  .pills,
+  .tabs {
+    display: none;
+  }
+
+  .page .formCard {
+    gap: 16px;
+    padding: 0;
+    border: 0;
+    background: none;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  .form {
+    gap: 16px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+}

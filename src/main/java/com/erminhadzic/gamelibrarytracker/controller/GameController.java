@@ -27,4 +27,15 @@ public class GameController {
         }
         return rawgClient.searchGames(q);
     }
+
+    // Ready-made lists for the Search page before the user types anything.
+    // type=popular: popular games of the last 12 months. type=top: the best rated games of all time.
+    @GetMapping(value = "/discover", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String discover(@RequestParam String type) {
+        return switch (type) {
+            case "popular" -> rawgClient.getPopularGames();
+            case "top" -> rawgClient.getTopRatedGames();
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "type must be popular or top");
+        };
+    }
 }
