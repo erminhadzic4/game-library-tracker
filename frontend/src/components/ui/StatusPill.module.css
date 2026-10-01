@@ -1,0 +1,22 @@
+.pill {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.playing {
+  background: var(--playing-soft);
+  color: var(--playing-text);
+}
+
+.backlog {
+  background: var(--backlog-soft);
+  color: var(--backlog-text);
+}
+
+.completed {
+  background: var(--completed-soft);
+  color: var(--completed-text);
+}

@@ -1,0 +1,88 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-label);
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 50px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--field-bg);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+/* The focus ring is drawn on the wrapper, because the <input> itself has no border */
+.control:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-ring);
+}
+
+.invalid,
+.invalid:focus-within {
+  border-color: var(--danger);
+}
+
+.invalid:focus-within {
+  box-shadow: 0 0 0 4px var(--danger-soft);
+}
+
+.icon {
+  display: flex;
+  color: var(--text);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-h);
+  font-size: 16px;
+}
+
+/* Browsers paint their own background on autofilled fields. This keeps the dark field and light text. */
+.input:-webkit-autofill {
+  -webkit-text-fill-color: var(--text-h);
+  transition: background-color 9999s;
+}
+
+/* The show/hide button of PasswordInput */
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-right: -8px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.toggle:hover {
+  color: var(--text-h);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--link);
+}

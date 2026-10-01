@@ -1,26 +1,39 @@
+/* Design tokens: every colour and font in the app comes from these variables. The app has one (dark) theme. */
 :root {
-  --text: #4b4755;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --accent: #7c3aed;
-  --danger: #c62828;
+  --bg: #0b0c10;
+  --surface: #15171d;
+  --field-bg: rgba(10, 11, 15, 0.6);
+  --border: rgba(255, 255, 255, 0.1);
 
-  font: 16px/1.5 system-ui, 'Segoe UI', Roboto, sans-serif;
-  color-scheme: light dark;
+  --text: #a9aebb;
+  --text-label: #c9ccd5;
+  --text-h: #ecedf1;
+  --link: #b4aaff;
+  --link-hover: #d6d0ff;
+
+  --accent: #6455f0;
+  --accent-hover: #7566f5;
+  --accent-ring: rgba(124, 108, 255, 0.18);
+
+  --danger: #e5636b;
+  --danger-soft: rgba(229, 99, 107, 0.12);
+  --danger-text: #ffb3b8;
+
+  --playing-soft: rgba(77, 163, 255, 0.14);
+  --playing-text: #8cc4ff;
+  --backlog-soft: rgba(245, 183, 72, 0.14);
+  --backlog-text: #f7c66c;
+  --completed-soft: rgba(76, 201, 140, 0.14);
+  --completed-text: #6bd9a2;
+
+  --font-body: Manrope, system-ui, 'Segoe UI', sans-serif;
+  --font-heading: 'Space Grotesk', var(--font-body);
+
+  font: 16px/1.5 var(--font-body);
+  /* Tells the browser to draw its own controls (select menus, scrollbars) dark as well */
+  color-scheme: dark;
   color: var(--text);
   background: var(--bg);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #b4b8c2;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --accent: #c084fc;
-    --danger: #ef9a9a;
-  }
 }
 
 * {
@@ -34,6 +47,7 @@ body {
 h1,
 h2 {
   color: var(--text-h);
+  font-family: var(--font-heading);
   font-weight: 600;
 }
 
@@ -51,9 +65,15 @@ p {
 }
 
 a {
-  color: var(--accent);
+  color: var(--link);
 }
 
+a:hover {
+  color: var(--link-hover);
+}
+
+/* Base look of plain form elements. The Library and Search pages still use these directly;
+   the components in src/components/ui/ override them. */
 input,
 select,
 textarea,
@@ -62,7 +82,7 @@ button {
   padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: var(--bg);
+  background: var(--surface);
   color: var(--text-h);
 }
 
@@ -70,7 +90,7 @@ button {
   cursor: pointer;
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--bg);
+  color: #fff;
 }
 
 button:disabled {
