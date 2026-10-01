@@ -27,7 +27,7 @@ Then start the app on port 8080:
 
 ## Frontend
 
-A React + TypeScript single-page app (Vite) lives in `frontend/`. It has four pages: Login, Register, Library (your games, with status, rating, notes and stats) and Search (find a game on RAWG and add it).
+A React + TypeScript single-page app (Vite) lives in `frontend/`. It has four pages: Login, Register, Library (your games, with status, rating, notes and stats) and Search (find a game on RAWG and add it; before you type, it shows "Popular right now" and "All-time greats" lists from `GET /api/games/discover`).
 
 Requirements: Node.js 20+ and the backend running on port 8080.
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ApiError, addLibraryEntry, searchGames } from '../api'
+import { ApiError, addLibraryEntry, discoverGames, searchGames } from '../api'
 import { PageHeader } from '../components/PageHeader'
 import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
@@ -27,9 +27,33 @@ export function SearchPage() {
   const [results, setResults] = useState<RawgGame[] | null>(null)
   const [searching, setSearching] = useState(false)
   const [error, setError] = useState(false)
-  const { entries, reload } = useLibrary()
+
+  // The two lists shown while the search field is empty. null until they have loaded.
+  const [popular, setPopular] = useState<RawgGame[] | null>(null)
+  const [topRated, setTopRated] = useState<RawgGame[] | null>(null)
+  const [discoverError, setDiscoverError] = useState(false)
 
   const trimmed = query.trim()
+
+  // Loads the discover lists once, when the page opens. The empty dependency list means typing never refetches them:
+  // they stay in state, and are simply hidden while there is search text.
+  useEffect(() => {
+    let ignore = false
+
+    Promise.all([discoverGames('popular'), discoverGames('top')])
+      .then(([popularResponse, topResponse]) => {
+        if (ignore) return
+        setPopular(popularResponse.results)
+        setTopRated(topResponse.results)
+      })
+      .catch(() => {
+        if (!ignore) setDiscoverError(true)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [])
 
   // replace: true swaps the current history entry, so Back doesn't step through every keystroke
   function handleQueryChange(value: string) {
@@ -65,11 +89,6 @@ export function SearchPage() {
     }
   }, [trimmed])
 
-  // Finds the library entry for a search result, if the game was already added
-  function libraryEntryFor(game: RawgGame): LibraryEntryResponse | undefined {
-    return entries.find((entry) => entry.rawgId === game.id)
-  }
-
   return (
     <>
       <PageHeader title="Search" subtitle="Find a game on RAWG and add it to your library." />
@@ -84,25 +103,60 @@ export function SearchPage() {
       />
 
       {!trimmed ? (
-        <EmptyState title="Find your next game">Start typing a title and the results show up here.</EmptyState>
+        // Nothing typed: show the discover lists instead of an empty page
+        discoverError ? (
+          <ErrorBox>Could not load the suggestions. You can still search above.</ErrorBox>
+        ) : (
+          <>
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Popular right now</h2>
+              <GameList games={popular} />
+            </section>
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>All-time greats</h2>
+              <GameList games={topRated} />
+            </section>
+          </>
+        )
       ) : error ? (
         <ErrorBox>Search failed. Please try again.</ErrorBox>
-      ) : searching || results === null ? (
-        <GameGrid>
-          {Array.from({ length: 12 }, (_, i) => (
-            <GameCardSkeleton key={i} />
-          ))}
-        </GameGrid>
-      ) : results.length === 0 ? (
+      ) : results !== null && results.length === 0 && !searching ? (
         <EmptyState title="No games found">Try a different title or check the spelling.</EmptyState>
       ) : (
-        <GameGrid>
-          {results.map((game, index) => (
-            <ResultCard key={game.id} game={game} index={index} libraryEntry={libraryEntryFor(game)} onAdded={reload} />
-          ))}
-        </GameGrid>
+        <GameList games={searching ? null : results} />
       )}
     </>
+  )
+}
+
+// A grid of result cards, or skeleton cards while the games are still loading (games = null).
+// Used for the search results and for both discover lists.
+function GameList({ games }: { games: RawgGame[] | null }) {
+  const { entries, reload } = useLibrary()
+
+  if (games === null) {
+    return (
+      <GameGrid>
+        {Array.from({ length: 12 }, (_, i) => (
+          <GameCardSkeleton key={i} />
+        ))}
+      </GameGrid>
+    )
+  }
+
+  return (
+    <GameGrid>
+      {games.map((game, index) => (
+        <ResultCard
+          key={game.id}
+          game={game}
+          index={index}
+          // The library entry for this game, if it was already added
+          libraryEntry={entries.find((entry) => entry.rawgId === game.id)}
+          onAdded={reload}
+        />
+      ))}
+    </GameGrid>
   )
 }
 

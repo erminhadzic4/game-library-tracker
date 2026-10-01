@@ -1,3 +1,15 @@
+/* One discover list: a heading and its grid */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 22px;
+}
+
 /* The status menu takes the free width, the Add button sits next to it */
 .add {
   display: flex;

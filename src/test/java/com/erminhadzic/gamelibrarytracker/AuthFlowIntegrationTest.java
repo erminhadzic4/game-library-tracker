@@ -74,6 +74,13 @@ class AuthFlowIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    // The security check runs before the controller, so RAWG is never called here
+    @Test
+    void discoverWithoutTokenReturns401() throws Exception {
+        mockMvc.perform(get("/api/games/discover").param("type", "popular"))
+                .andExpect(status().isUnauthorized());
+    }
+
     @Test
     void protectedEndpointWithInvalidTokenReturns401() throws Exception {
         mockMvc.perform(get("/api/library").header("Authorization", "Bearer not-a-real-token"))

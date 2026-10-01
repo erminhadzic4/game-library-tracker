@@ -88,6 +88,12 @@ export function searchGames(query: string) {
   return request<RawgSearchResponse>(`/api/games/search?q=${encodeURIComponent(query)}`)
 }
 
+// popular: popular games of the last 12 months. top: the best rated games of all time.
+// The response has the same shape as a search.
+export function discoverGames(type: 'popular' | 'top') {
+  return request<RawgSearchResponse>(`/api/games/discover?type=${type}`)
+}
+
 export function getLibrary(status?: Status) {
   return request<LibraryEntryResponse[]>(status ? `/api/library?status=${status}` : '/api/library')
 }
