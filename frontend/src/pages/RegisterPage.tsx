@@ -30,7 +30,7 @@ export function RegisterPage() {
     try {
       // Register returns a token, so the user is logged in straight away
       const response = await registerRequest({ username, email, password })
-      login(response.token)
+      login(response.token, username)
       navigate('/library', { replace: true })
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {

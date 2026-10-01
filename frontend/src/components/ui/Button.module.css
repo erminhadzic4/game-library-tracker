@@ -2,17 +2,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  height: 52px;
-  padding: 0 20px;
+  flex-shrink: 0;
   border: 1px solid transparent;
-  border-radius: 12px;
   font-weight: 700;
-  font-size: 16px;
+  white-space: nowrap;
   cursor: pointer;
   transition:
     background-color 0.15s,
-    border-color 0.15s;
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .button:focus-visible {
@@ -25,10 +23,30 @@
   cursor: default;
 }
 
+.md {
+  gap: 10px;
+  height: 52px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+.sm {
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
 .primary {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+}
+
+/* Only the big form button gets the glow */
+.primary.md {
   box-shadow: 0 10px 30px rgba(100, 85, 240, 0.4);
 }
 
@@ -45,6 +63,28 @@
 
 .secondary:hover:not(:disabled) {
   border-color: var(--text);
+  color: var(--text-h);
+}
+
+.light {
+  background: var(--text-h);
+  border-color: var(--text-h);
+  color: var(--bg);
+}
+
+.light:hover:not(:disabled) {
+  background: #fff;
+  border-color: #fff;
+}
+
+.danger {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger-text);
+}
+
+.danger:hover:not(:disabled) {
+  background: var(--danger-soft);
 }
 
 /* A ring with one transparent side, spinning */

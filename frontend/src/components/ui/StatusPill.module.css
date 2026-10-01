@@ -20,3 +20,26 @@
   background: var(--completed-soft);
   color: var(--completed-text);
 }
+
+/* On a cover the soft backgrounds would disappear into the picture, so these are darker and blur what is behind */
+.onCover {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  backdrop-filter: blur(8px);
+}
+
+.onCover.playing {
+  background: rgba(30, 90, 170, 0.75);
+  color: #bfe0ff;
+}
+
+.onCover.backlog {
+  background: rgba(150, 100, 10, 0.75);
+  color: #ffe2a8;
+}
+
+.onCover.completed {
+  background: rgba(20, 120, 70, 0.75);
+  color: #bdf2d6;
+}

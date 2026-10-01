@@ -9,7 +9,16 @@ const STATUS_CLASSES: Record<Status, string> = {
   COMPLETED: styles.completed,
 }
 
+interface StatusPillProps {
+  status: Status
+  // The smaller, more solid version that stays readable on top of a game cover
+  onCover?: boolean
+}
+
 // A small rounded label showing a library status in its colour
-export function StatusPill({ status }: { status: Status }) {
-  return <span className={`${styles.pill} ${STATUS_CLASSES[status]}`}>{STATUS_LABELS[status]}</span>
+export function StatusPill({ status, onCover = false }: StatusPillProps) {
+  const classes = [styles.pill, STATUS_CLASSES[status]]
+  if (onCover) classes.push(styles.onCover)
+
+  return <span className={classes.join(' ')}>{STATUS_LABELS[status]}</span>
 }

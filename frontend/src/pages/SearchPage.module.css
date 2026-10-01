@@ -1,67 +1,23 @@
-.form {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 24px;
-}
-
-.query {
-  flex: 1;
-  min-width: 0;
-}
-
-.error {
-  color: var(--danger);
-  font-size: 14px;
-}
-
-.grid {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
-}
-
-.card {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.cover {
-  display: block;
-  width: 100%;
-  height: 140px;
-  object-fit: cover;
-  background: var(--border);
-}
-
-.body {
-  padding: 12px;
-}
-
-.body h2 {
-  font-size: 18px;
-  margin: 0;
-}
-
-.meta {
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-
-.actions {
+/* The status menu takes the free width, the Add button sits next to it */
+.add {
   display: flex;
   gap: 8px;
 }
 
-.actions select {
+.add > :first-child {
   flex: 1;
-  min-width: 0;
 }
 
-.added {
-  color: var(--accent);
+/* Same height as the "Add" button, so cards in a row line up whether or not the game is in the library */
+.inLibrary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--completed-soft);
+  color: var(--completed-text);
   font-size: 14px;
+  font-weight: 700;
 }

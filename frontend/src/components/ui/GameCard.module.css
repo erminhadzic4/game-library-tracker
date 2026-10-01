@@ -1,0 +1,196 @@
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 22px 20px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  /* "both" keeps the card invisible until its delay (set inline, per card) has passed */
+  animation: appear 0.25s ease-out both;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* 16:9, because RAWG's images are landscape screenshots and key art, not portrait box art */
+.cover {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: var(--surface);
+  transition:
+    transform 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+}
+
+.monogram {
+  position: absolute;
+  right: 4px;
+  bottom: -14px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 96px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.08);
+}
+
+.pill {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  display: flex;
+}
+
+.open {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.open:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: -2px;
+}
+
+/* The hover actions don't exist on touch screens: there, a tap on the cover opens Edit */
+.overlay {
+  display: none;
+}
+
+/* Only for devices with a real hover (a mouse) */
+@media (hover: hover) {
+  .interactive:hover .cover,
+  .interactive:focus-within .cover {
+    transform: translateY(-6px);
+    border-color: rgba(180, 170, 255, 0.6);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(11, 12, 16, 0.55);
+    opacity: 0;
+    visibility: hidden;
+    /* A click on the dark area falls through to the cover button; the action buttons take their own clicks */
+    pointer-events: none;
+    transition:
+      opacity 0.15s,
+      visibility 0.15s;
+  }
+
+  .overlay > * {
+    pointer-events: auto;
+  }
+
+  .interactive:hover .overlay,
+  .interactive:focus-within .overlay {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.title {
+  overflow: hidden;
+  color: var(--text-h);
+  font-weight: 700;
+  font-size: 15px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.separator {
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: #5b606d;
+}
+
+.star,
+.starEmpty {
+  display: flex;
+}
+
+.star {
+  color: var(--star);
+}
+
+.starEmpty {
+  color: #5b606d;
+}
+
+.skeletonCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeletonCard .skeletonCover {
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+}
+
+.skeletonCard .skeletonTitle {
+  width: 80%;
+  height: 16px;
+}
+
+.skeletonCard .skeletonMeta {
+  width: 50%;
+  height: 12px;
+}
+
+@media (max-width: 860px) {
+  .grid {
+    gap: 16px 14px;
+  }
+}

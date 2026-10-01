@@ -1,11 +1,16 @@
 /* Design tokens: every colour and font in the app comes from these variables. The app has one (dark) theme. */
 :root {
   --bg: #0b0c10;
+  --sidebar-bg: #101117;
   --surface: #15171d;
+  --surface-raised: #1c1f27;
+  --avatar-bg: #2a2f3d;
   --field-bg: rgba(10, 11, 15, 0.6);
   --border: rgba(255, 255, 255, 0.1);
+  --border-soft: rgba(255, 255, 255, 0.06);
 
   --text: #a9aebb;
+  --text-muted: #9aa0ae;
   --text-label: #c9ccd5;
   --text-h: #ecedf1;
   --link: #b4aaff;
@@ -19,12 +24,18 @@
   --danger-soft: rgba(229, 99, 107, 0.12);
   --danger-text: #ffb3b8;
 
+  /* Per status: the solid colour (dots, bars), a soft background and a readable text colour */
+  --playing: #4da3ff;
   --playing-soft: rgba(77, 163, 255, 0.14);
   --playing-text: #8cc4ff;
+  --backlog: #f5b748;
   --backlog-soft: rgba(245, 183, 72, 0.14);
   --backlog-text: #f7c66c;
+  --completed: #4cc98c;
   --completed-soft: rgba(76, 201, 140, 0.14);
   --completed-text: #6bd9a2;
+
+  --star: #f5b748;
 
   --font-body: Manrope, system-ui, 'Segoe UI', sans-serif;
   --font-heading: 'Space Grotesk', var(--font-body);
@@ -72,28 +83,20 @@ a:hover {
   color: var(--link-hover);
 }
 
-/* Base look of plain form elements. The Library and Search pages still use these directly;
-   the components in src/components/ui/ override them. */
+/* Form elements don't inherit the page font by default. Their look comes from the components in src/components/ui/. */
 input,
 select,
 textarea,
 button {
   font: inherit;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--text-h);
 }
 
-button {
-  cursor: pointer;
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: default;
+/* People who ask their system for less motion get no animations or transitions at all */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }

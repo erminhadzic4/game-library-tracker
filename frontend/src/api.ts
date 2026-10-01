@@ -11,17 +11,25 @@ import type {
 } from './types'
 
 const TOKEN_KEY = 'token'
+const USERNAME_KEY = 'username'
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY)
 }
 
-export function saveToken(token: string) {
-  localStorage.setItem(TOKEN_KEY, token)
+// The backend only returns a token, so the username typed at login is saved next to it for the UI to show
+export function getUsername(): string | null {
+  return localStorage.getItem(USERNAME_KEY)
 }
 
-export function clearToken() {
+export function saveSession(token: string, username: string) {
+  localStorage.setItem(TOKEN_KEY, token)
+  localStorage.setItem(USERNAME_KEY, username)
+}
+
+export function clearSession() {
   localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(USERNAME_KEY)
 }
 
 // Thrown for any non-2xx response, so pages can show a message based on the status code

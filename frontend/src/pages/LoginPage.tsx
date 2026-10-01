@@ -32,7 +32,7 @@ export function LoginPage() {
     setSubmitting(true)
     try {
       const response = await loginRequest({ username, password })
-      login(response.token)
+      login(response.token, username)
       navigate('/library', { replace: true })
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
