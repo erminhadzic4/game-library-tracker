@@ -18,6 +18,21 @@ import styles from './SearchPage.module.css'
 // How long to wait after the last keystroke before searching
 const DEBOUNCE_MS = 300
 
+// RAWG's lists contain entries without a picture and the same game more than once.
+// The discover lists are a showcase, so those are left out here. Search results are not filtered:
+// someone searching for a game should find it even if it has no picture.
+function cleanDiscoverList(games: RawgGame[]): RawgGame[] {
+  const seenNames = new Set<string>()
+  return games.filter((game) => {
+    if (!game.background_image) return false
+    // Compared in lower case, so "Portal" and "PORTAL" count as the same name. The first one is kept.
+    const name = game.name.trim().toLowerCase()
+    if (seenNames.has(name)) return false
+    seenNames.add(name)
+    return true
+  })
+}
+
 export function SearchPage() {
   // The search text lives in the URL (?q=...) instead of in state, so a refresh or the Back button keeps it.
   // The Library page's search field links here with the same parameter.
@@ -43,8 +58,8 @@ export function SearchPage() {
     Promise.all([discoverGames('popular'), discoverGames('top')])
       .then(([popularResponse, topResponse]) => {
         if (ignore) return
-        setPopular(popularResponse.results)
-        setTopRated(topResponse.results)
+        setPopular(cleanDiscoverList(popularResponse.results))
+        setTopRated(cleanDiscoverList(topResponse.results))
       })
       .catch(() => {
         if (!ignore) setDiscoverError(true)

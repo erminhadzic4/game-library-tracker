@@ -223,4 +223,4 @@ npm run build
 - **A rating can't be cleared.** `PATCH` treats a missing or null field as "unchanged", so a rating can be changed but not removed.
 - **No frontend tests yet.** The frontend is checked by ESLint and the TypeScript build only.
 - **No caching for discovery.** Each visit to the Search page calls RAWG twice. The lists change slowly, so a short server-side cache would save requests.
-- **RAWG responses are passed through as-is.** Mapping them to DTOs would decouple the frontend from RAWG's field names.
+- **RAWG responses are passed through as-is.** RAWG's lists include entries without an image and the same game under one name more than once; the frontend filters these out of the discovery lists, so a list can show fewer than 12 games. Mapping the responses to DTOs on the backend would move that clean-up to the server and decouple the frontend from RAWG's field names.
