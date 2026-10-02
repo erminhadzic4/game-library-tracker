@@ -131,27 +131,68 @@ class LibraryServiceTest {
     // --- updateEntry ---
 
     @Test
-    void updateEntry_ownEntry_appliesOnlyProvidedFields() {
+    void updateEntry_ownEntry_replacesAllEditableFields() {
         LibraryEntry entry = entry(100L, alice, Status.PLAYING, null);
         entry.setNotes("old notes");
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
         when(libraryEntryRepository.findByIdAndUser(100L, alice)).thenReturn(Optional.of(entry));
 
         LibraryEntryResponse response = libraryService.updateEntry("alice", 100L,
-                new UpdateLibraryEntryRequest(Status.COMPLETED, 9, null));
+                new UpdateLibraryEntryRequest(Status.COMPLETED, 9, "  new notes  "));
 
         assertThat(response.status()).isEqualTo(Status.COMPLETED);
         assertThat(response.rating()).isEqualTo(9);
-        // notes was null in the request, so it stays unchanged
-        assertThat(response.notes()).isEqualTo("old notes");
+        // notes are trimmed before they are stored
+        assertThat(response.notes()).isEqualTo("new notes");
+    }
+
+    @Test
+    void updateEntry_nullRatingAndNotes_clearsThem() {
+        LibraryEntry entry = entry(100L, alice, Status.PLAYING, 8);
+        entry.setNotes("old notes");
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+        when(libraryEntryRepository.findByIdAndUser(100L, alice)).thenReturn(Optional.of(entry));
+
+        LibraryEntryResponse response = libraryService.updateEntry("alice", 100L,
+                new UpdateLibraryEntryRequest(Status.PLAYING, null, null));
+
+        assertThat(response.status()).isEqualTo(Status.PLAYING);
+        assertThat(response.rating()).isNull();
+        assertThat(response.notes()).isNull();
+        // The entity itself was changed, which is what Hibernate writes when the transaction commits
+        assertThat(entry.getRating()).isNull();
+        assertThat(entry.getNotes()).isNull();
+    }
+
+    @Test
+    void updateEntry_blankNotes_storedAsNull() {
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+        for (String blank : new String[] {"", "   ", " \n\t "}) {
+            LibraryEntry entry = entry(100L, alice, Status.PLAYING, 8);
+            entry.setNotes("old notes");
+            when(libraryEntryRepository.findByIdAndUser(100L, alice)).thenReturn(Optional.of(entry));
+
+            LibraryEntryResponse response = libraryService.updateEntry("alice", 100L,
+                    new UpdateLibraryEntryRequest(Status.PLAYING, 8, blank));
+
+            assertThat(response.notes()).isNull();
+            assertThat(response.rating()).isEqualTo(8);
+        }
+    }
+
+    @Test
+    void updateEntry_missingStatus_returns400() {
+        assertStatus(() -> libraryService.updateEntry("alice", 100L, new UpdateLibraryEntryRequest(null, 8, "notes")),
+                HttpStatus.BAD_REQUEST);
+        verifyNoInteractions(userRepository, libraryEntryRepository);
     }
 
     @Test
     void updateEntry_ratingOutOfRange_returns400() {
-        assertStatus(() -> libraryService.updateEntry("alice", 100L, new UpdateLibraryEntryRequest(null, 0, null)),
-                HttpStatus.BAD_REQUEST);
-        assertStatus(() -> libraryService.updateEntry("alice", 100L, new UpdateLibraryEntryRequest(null, 11, null)),
-                HttpStatus.BAD_REQUEST);
+        assertStatus(() -> libraryService.updateEntry("alice", 100L,
+                new UpdateLibraryEntryRequest(Status.PLAYING, 0, null)), HttpStatus.BAD_REQUEST);
+        assertStatus(() -> libraryService.updateEntry("alice", 100L,
+                new UpdateLibraryEntryRequest(Status.PLAYING, 11, null)), HttpStatus.BAD_REQUEST);
         verifyNoInteractions(libraryEntryRepository);
     }
 
@@ -160,7 +201,7 @@ class LibraryServiceTest {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
         when(libraryEntryRepository.findByIdAndUser(999L, alice)).thenReturn(Optional.empty());
 
-        assertStatus(() -> libraryService.updateEntry("alice", 999L, new UpdateLibraryEntryRequest(null, 8, null)),
+        assertStatus(() -> libraryService.updateEntry("alice", 999L, new UpdateLibraryEntryRequest(Status.PLAYING, 8, null)),
                 HttpStatus.NOT_FOUND);
     }
 
@@ -170,7 +211,7 @@ class LibraryServiceTest {
         when(userRepository.findByUsername("bob")).thenReturn(Optional.of(bob));
         when(libraryEntryRepository.findByIdAndUser(100L, bob)).thenReturn(Optional.empty());
 
-        assertStatus(() -> libraryService.updateEntry("bob", 100L, new UpdateLibraryEntryRequest(null, 1, null)),
+        assertStatus(() -> libraryService.updateEntry("bob", 100L, new UpdateLibraryEntryRequest(Status.PLAYING, 1, null)),
                 HttpStatus.NOT_FOUND);
     }
 

@@ -144,10 +144,12 @@ erDiagram
 | GET | `/api/library` | Yes | The user's entries, newest first. Optional `?status=PLAYING\|BACKLOG\|COMPLETED`. |
 | POST | `/api/library` | Yes | Add a game with a status. Returns `201`; `409` if it is already in the library. |
 | GET | `/api/library/stats` | Yes | Total, count per status and average rating. |
-| PATCH | `/api/library/{id}` | Yes | Change status, rating or notes; fields left out stay unchanged. `404` if the entry isn't the user's. |
+| PUT | `/api/library/{id}` | Yes | Replace status, rating and notes. `status` is required; a null rating or null / blank notes clears the saved value. `400` for a missing status or a rating outside 1–10; `404` if the entry isn't the user's. |
 | DELETE | `/api/library/{id}` | Yes | Remove an entry. Returns `204`; `404` if the entry isn't the user's. |
 
 Endpoints marked "Yes" need an `Authorization: Bearer <token>` header and return `401` without a valid token.
+
+The update was a `PATCH` in earlier versions (a null field meant "unchanged", so a rating could never be removed). It is now a `PUT`, and `PATCH /api/library/{id}` returns `405`.
 
 ## Getting started
 
@@ -192,7 +194,7 @@ Then open http://localhost:5173. The dev server forwards every `/api` request to
 
 ## Testing
 
-Backend, 32 tests (Mockito unit tests for the services and the game controller, plus an integration test of the auth flow):
+Backend, 41 tests (Mockito unit tests for the services and the game controller, plus integration tests of the auth flow and the library flow):
 
 ```bash
 ./mvnw test
@@ -213,6 +215,7 @@ npm run build
 - **Stateless JWT instead of sessions.** The server stores nothing per login, so any instance can answer any request. CSRF protection is off because the token travels in a header, not a cookie.
 - **DTOs, never entities, in responses.** `LibraryEntryResponse` is a flat view of an entry and its game. The `User` entity, which holds the password hash, never leaves the service layer.
 - **404 instead of 403 for another user's entry.** The lookup is by id and owner together, so an entry that belongs to someone else looks exactly like one that doesn't exist, and entry ids can't be probed.
+- **`PUT` instead of `PATCH` for the entry update.** A JSON body can't easily tell "field not sent" from "field sent as null", so a partial update had no way to clear a rating. The edit form always holds status, rating and notes together, so the update replaces all three, and null means "cleared".
 - **`@EntityGraph` against N+1 queries.** The library list loads each entry's game in the same query instead of one extra query per entry.
 - **A Vite proxy instead of CORS.** In development the browser only talks to the Vite server, which forwards `/api` to Spring Boot. The backend needs no CORS configuration.
 - **Filtering and sorting in the browser.** The frontend loads the whole library once, because the sidebar count and the "In library" markers on the Search page need it anyway. Filtering and sorting that list locally is instant. The API still supports `?status=` for clients that want it; a very large library would need server-side paging.
@@ -220,7 +223,6 @@ npm run build
 ## Known limitations and next steps
 
 - **No box art.** RAWG's `background_image` is a landscape screenshot or piece of key art, so the cards use a 16:9 cover area. IGDB would be the source for real portrait covers.
-- **A rating can't be cleared.** `PATCH` treats a missing or null field as "unchanged", so a rating can be changed but not removed.
 - **No frontend tests yet.** The frontend is checked by ESLint and the TypeScript build only.
 - **No caching for discovery.** Each visit to the Search page calls RAWG twice. The lists change slowly, so a short server-side cache would save requests.
 - **RAWG responses are passed through as-is.** RAWG's lists include entries without an image and the same game under one name more than once; the frontend filters these out of the discovery lists, so a list can show fewer than 12 games. Mapping the responses to DTOs on the backend would move that clean-up to the server and decouple the frontend from RAWG's field names.

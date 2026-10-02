@@ -34,11 +34,11 @@ export interface AddLibraryEntryRequest {
   status: Status
 }
 
-// Partial update: a field that is left out stays unchanged on the server
+// Full replacement (PUT): all three fields are always sent. A null rating or notes clears the saved value.
 export interface UpdateLibraryEntryRequest {
-  status?: Status
-  rating?: number
-  notes?: string
+  status: Status
+  rating: number | null
+  notes: string | null
 }
 
 export interface LibraryEntryResponse {

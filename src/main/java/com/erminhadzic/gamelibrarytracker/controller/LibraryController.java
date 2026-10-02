@@ -41,7 +41,8 @@ public class LibraryController {
         return libraryService.getStats(user.getUsername());
     }
 
-    @PatchMapping("/{id}")
+    // PUT, not PATCH: the request replaces all editable fields (status, rating, notes) at once
+    @PutMapping("/{id}")
     public LibraryEntryResponse update(@AuthenticationPrincipal UserDetails user,
                                        @PathVariable Long id,
                                        @RequestBody UpdateLibraryEntryRequest request) {

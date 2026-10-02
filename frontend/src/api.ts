@@ -107,7 +107,7 @@ export function addLibraryEntry(body: AddLibraryEntryRequest) {
 }
 
 export function updateLibraryEntry(id: number, body: UpdateLibraryEntryRequest) {
-  return request<LibraryEntryResponse>(`/api/library/${id}`, { method: 'PATCH', body: JSON.stringify(body) })
+  return request<LibraryEntryResponse>(`/api/library/${id}`, { method: 'PUT', body: JSON.stringify(body) })
 }
 
 export function deleteLibraryEntry(id: number) {

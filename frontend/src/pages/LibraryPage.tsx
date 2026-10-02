@@ -307,9 +307,11 @@ function EditEntryForm({ entry, onSave, onRemove }: EditEntryFormProps) {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    const changes: UpdateLibraryEntryRequest = { status, notes }
-    if (rating !== '') {
-      changes.rating = Number(rating)
+    // The update replaces all three fields. null clears a rating; the server stores blank notes as null too.
+    const changes: UpdateLibraryEntryRequest = {
+      status,
+      rating: rating === '' ? null : Number(rating),
+      notes: notes.trim() === '' ? null : notes,
     }
     setSaving(true)
     await onSave(changes)
@@ -327,10 +329,7 @@ function EditEntryForm({ entry, onSave, onRemove }: EditEntryFormProps) {
       </Select>
 
       <Select label="Rating" value={rating} onChange={(e) => setRating(e.target.value)}>
-        {/* The API can't clear a rating yet, so "not rated" can't be picked again once a rating is saved */}
-        <option value="" disabled={entry.rating !== null}>
-          Not rated
-        </option>
+        <option value="">Not rated</option>
         {RATINGS.map((option) => (
           <option key={option} value={option}>
             {option} / 10

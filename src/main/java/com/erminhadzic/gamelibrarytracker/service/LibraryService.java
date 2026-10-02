@@ -88,23 +88,20 @@ public class LibraryService {
 
     @Transactional
     public LibraryEntryResponse updateEntry(String username, Long entryId, UpdateLibraryEntryRequest request) {
-        if (request.status() == null && request.rating() == null && request.notes() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Provide at least one of status, rating or notes");
+        if (request.status() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "status is required");
         }
         if (request.rating() != null && (request.rating() < 1 || request.rating() > 10)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "rating must be between 1 and 10");
         }
         LibraryEntry entry = getOwnedEntry(username, entryId);
 
-        if (request.status() != null) {
-            entry.setStatus(request.status());
-        }
-        if (request.rating() != null) {
-            entry.setRating(request.rating());
-        }
-        if (request.notes() != null) {
-            entry.setNotes(request.notes());
-        }
+        // Full replacement: all three fields are overwritten, so a null rating or notes clears the saved value
+        entry.setStatus(request.status());
+        entry.setRating(request.rating());
+        // Blank or whitespace-only notes are stored as null, so "no notes" has one representation
+        String notes = (request.notes() == null) ? null : request.notes().trim();
+        entry.setNotes((notes == null || notes.isEmpty()) ? null : notes);
         // No save() needed: the entry is managed, so Hibernate writes the changes when the transaction commits
         return LibraryEntryResponse.from(entry);
     }
