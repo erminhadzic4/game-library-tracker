@@ -211,7 +211,11 @@ Then open http://localhost:5173. The dev server forwards every `/api` request to
 
 ## Testing
 
-Backend, 58 tests (Mockito unit tests for the services and the game controller, plus integration tests of the auth flow, the library flow and the error responses):
+Backend, 86 tests in three layers:
+
+- **Unit tests** (Mockito) for the services and the game controller: business rules without Spring or a database.
+- **Repository tests** (`@DataJpaTest`) that run the queries as real SQL: ownership filtering, newest-first ordering, the average rating, the unique constraints, and that the list queries load each entry's game in the same query.
+- **Integration tests** (`@SpringBootTest` + MockMvc) of the auth flow, the library flow and the error responses, through the real security filter chain.
 
 ```bash
 ./mvnw test
