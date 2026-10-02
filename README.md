@@ -63,7 +63,7 @@ A full-stack web app for tracking your video game library: a **Java / Spring Boo
 **Backend**
 
 - Java 17
-- Spring Boot 4.0.8: Web MVC, Data JPA (Hibernate), Security, Validation
+- Spring Boot 4.0.8: Web MVC, Data JPA (Hibernate), Security, Validation, Cache (Caffeine)
 - PostgreSQL
 - JWT with jjwt 0.12.6
 - Maven (wrapper included)
@@ -211,11 +211,11 @@ Then open http://localhost:5173. The dev server forwards every `/api` request to
 
 ## Testing
 
-Backend, 86 tests in three layers:
+Backend, 91 tests in three layers:
 
 - **Unit tests** (Mockito) for the services and the game controller: business rules without Spring or a database.
 - **Repository tests** (`@DataJpaTest`) that run the queries as real SQL: ownership filtering, newest-first ordering, the average rating, the unique constraints, and that the list queries load each entry's game in the same query.
-- **Integration tests** (`@SpringBootTest` + MockMvc) of the auth flow, the library flow and the error responses, through the real security filter chain.
+- **Integration tests** (`@SpringBootTest` + MockMvc) of the auth flow, the library flow and the error responses, through the real security filter chain. One more checks the discovery cache by counting the requests that reach a fake RAWG server.
 
 ```bash
 ./mvnw test
@@ -239,6 +239,7 @@ npm run build
 - **`PUT` instead of `PATCH` for the entry update.** A JSON body can't easily tell "field not sent" from "field sent as null", so a partial update had no way to clear a rating. The edit form always holds status, rating and notes together, so the update replaces all three, and null means "cleared".
 - **Validation on the DTOs, errors in one place.** The field rules are Bean Validation annotations on the request records, checked by `@Valid` before a controller method runs, so the services only hold business rules (duplicates, ownership). One `@RestControllerAdvice` turns every exception into the same `ProblemDetail` body; the frontend shows the server's messages on the register form and falls back to its own text per status code.
 - **The database has the last word on duplicates.** Two simultaneous requests to add the same game both pass the "already in the library" check. The unique constraint on `(user_id, game_id)` rejects the second insert, and the service turns exactly that failure into a `409`.
+- **A one-hour cache for the discovery lists.** "Popular" and "top rated" change slowly and RAWG has a request quota, so the backend keeps each answer in memory for an hour (Spring's `@Cacheable` with Caffeine; the expiry and size are settings in `application.properties`). A failed RAWG call is not stored. Search results are not cached, because every query is different. The cache is per server instance and is emptied by a restart.
 - **`@EntityGraph` against N+1 queries.** The library list loads each entry's game in the same query instead of one extra query per entry.
 - **A Vite proxy instead of CORS.** In development the browser only talks to the Vite server, which forwards `/api` to Spring Boot. The backend needs no CORS configuration.
 - **Filtering and sorting in the browser.** The frontend loads the whole library once, because the sidebar count and the "In library" markers on the Search page need it anyway. Filtering and sorting that list locally is instant. The API still supports `?status=` for clients that want it; a very large library would need server-side paging.
@@ -248,5 +249,4 @@ npm run build
 - **No box art.** RAWG's `background_image` is a landscape screenshot or piece of key art, so the cards use a 16:9 cover area. IGDB would be the source for real portrait covers.
 - **Two rare races still return a 500.** Two simultaneous registrations with the same username or email, and two users adding the same brand-new game at the same moment, both hit a unique constraint that isn't translated yet. The response is the generic `500` body, and a retry succeeds or gives the proper `409`.
 - **No frontend tests yet.** The frontend is checked by ESLint and the TypeScript build only.
-- **No caching for discovery.** Each visit to the Search page calls RAWG twice. The lists change slowly, so a short server-side cache would save requests.
 - **RAWG responses are passed through as-is.** RAWG's lists include entries without an image and the same game under one name more than once; the frontend filters these out of the discovery lists, so a list can show fewer than 12 games. Mapping the responses to DTOs on the backend would move that clean-up to the server and decouple the frontend from RAWG's field names.
