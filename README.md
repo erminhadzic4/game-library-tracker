@@ -137,19 +137,36 @@ erDiagram
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | `/api/auth/register` | No | Create an account. Returns `201` with a token; `409` if the username or email is taken. |
+| POST | `/api/auth/register` | No | Create an account. Returns `201` with a token; `409` if the username or email is taken; `400` if a field breaks a rule (username 3–50 characters, a valid email, password 8–72 characters). |
 | POST | `/api/auth/login` | No | Log in. Returns `200` with a token; `401` for a wrong username or password. |
 | GET | `/api/games/search?q=` | Yes | Search RAWG by title. `400` if `q` is blank. |
 | GET | `/api/games/discover?type=` | Yes | A ready-made list: `popular` (most added, last 12 months) or `top` (highest Metacritic score). `400` for any other type. |
 | GET | `/api/library` | Yes | The user's entries, newest first. Optional `?status=PLAYING\|BACKLOG\|COMPLETED`. |
-| POST | `/api/library` | Yes | Add a game with a status. Returns `201`; `409` if it is already in the library. |
+| POST | `/api/library` | Yes | Add a game with a status. Returns `201`; `409` if it is already in the library; `400` if `rawgId`, `title` or `status` is missing. |
 | GET | `/api/library/stats` | Yes | Total, count per status and average rating. |
-| PUT | `/api/library/{id}` | Yes | Replace status, rating and notes. `status` is required; a null rating or null / blank notes clears the saved value. `400` for a missing status or a rating outside 1–10; `404` if the entry isn't the user's. |
+| PUT | `/api/library/{id}` | Yes | Replace status, rating and notes. `status` is required; a null rating or null / blank notes clears the saved value. `400` for a missing status, a rating outside 1–10 or notes over 2000 characters; `404` if the entry isn't the user's. |
 | DELETE | `/api/library/{id}` | Yes | Remove an entry. Returns `204`; `404` if the entry isn't the user's. |
 
 Endpoints marked "Yes" need an `Authorization: Bearer <token>` header and return `401` without a valid token.
 
 The update was a `PATCH` in earlier versions (a null field meant "unchanged", so a rating could never be removed). It is now a `PUT`, and `PATCH /api/library/{id}` returns `405`.
+
+**Error responses.** Every error has the same JSON body, Spring's `ProblemDetail` (RFC 9457), sent as `application/problem+json`. That includes the `401` for a missing token, malformed JSON, a wrong HTTP method and unknown paths. A validation error also lists each field that broke a rule:
+
+```json
+{
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Validation failed",
+  "instance": "/api/auth/register",
+  "errors": [
+    { "field": "password", "message": "Password must be 8 to 72 characters long" },
+    { "field": "username", "message": "Username must be 3 to 50 characters long" }
+  ]
+}
+```
+
+An unexpected error returns `500` with the detail "An unexpected error occurred"; the real exception is only written to the server log.
 
 ## Getting started
 
@@ -194,7 +211,7 @@ Then open http://localhost:5173. The dev server forwards every `/api` request to
 
 ## Testing
 
-Backend, 41 tests (Mockito unit tests for the services and the game controller, plus integration tests of the auth flow and the library flow):
+Backend, 58 tests (Mockito unit tests for the services and the game controller, plus integration tests of the auth flow, the library flow and the error responses):
 
 ```bash
 ./mvnw test
@@ -216,6 +233,8 @@ npm run build
 - **DTOs, never entities, in responses.** `LibraryEntryResponse` is a flat view of an entry and its game. The `User` entity, which holds the password hash, never leaves the service layer.
 - **404 instead of 403 for another user's entry.** The lookup is by id and owner together, so an entry that belongs to someone else looks exactly like one that doesn't exist, and entry ids can't be probed.
 - **`PUT` instead of `PATCH` for the entry update.** A JSON body can't easily tell "field not sent" from "field sent as null", so a partial update had no way to clear a rating. The edit form always holds status, rating and notes together, so the update replaces all three, and null means "cleared".
+- **Validation on the DTOs, errors in one place.** The field rules are Bean Validation annotations on the request records, checked by `@Valid` before a controller method runs, so the services only hold business rules (duplicates, ownership). One `@RestControllerAdvice` turns every exception into the same `ProblemDetail` body; the frontend shows the server's messages on the register form and falls back to its own text per status code.
+- **The database has the last word on duplicates.** Two simultaneous requests to add the same game both pass the "already in the library" check. The unique constraint on `(user_id, game_id)` rejects the second insert, and the service turns exactly that failure into a `409`.
 - **`@EntityGraph` against N+1 queries.** The library list loads each entry's game in the same query instead of one extra query per entry.
 - **A Vite proxy instead of CORS.** In development the browser only talks to the Vite server, which forwards `/api` to Spring Boot. The backend needs no CORS configuration.
 - **Filtering and sorting in the browser.** The frontend loads the whole library once, because the sidebar count and the "In library" markers on the Search page need it anyway. Filtering and sorting that list locally is instant. The API still supports `?status=` for clients that want it; a very large library would need server-side paging.
@@ -223,6 +242,7 @@ npm run build
 ## Known limitations and next steps
 
 - **No box art.** RAWG's `background_image` is a landscape screenshot or piece of key art, so the cards use a 16:9 cover area. IGDB would be the source for real portrait covers.
+- **Two rare races still return a 500.** Two simultaneous registrations with the same username or email, and two users adding the same brand-new game at the same moment, both hit a unique constraint that isn't translated yet. The response is the generic `500` body, and a retry succeeds or gives the proper `409`.
 - **No frontend tests yet.** The frontend is checked by ESLint and the TypeScript build only.
 - **No caching for discovery.** Each visit to the Search page calls RAWG twice. The lists change slowly, so a short server-side cache would save requests.
 - **RAWG responses are passed through as-is.** RAWG's lists include entries without an image and the same game under one name more than once; the frontend filters these out of the discovery lists, so a list can show fewer than 12 games. Mapping the responses to DTOs on the backend would move that clean-up to the server and decouple the frontend from RAWG's field names.

@@ -27,9 +27,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (isBlank(request.username()) || isBlank(request.email()) || isBlank(request.password())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username, email and password are required");
-        }
+        // Required fields, email format and lengths are validated on RegisterRequest (@Valid in the controller)
         if (userRepository.existsByUsername(request.username())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already taken");
         }
@@ -47,19 +45,11 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        if (isBlank(request.username()) || isBlank(request.password())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username and password are required");
-        }
-
         // Same error for unknown user and wrong password, so callers can't probe which usernames exist
         User user = userRepository.findByUsername(request.username())
                 .filter(u -> passwordEncoder.matches(request.password(), u.getPassword()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password"));
 
         return new AuthResponse(jwtService.generateToken(user.getUsername()));
-    }
-
-    private static boolean isBlank(String value) {
-        return value == null || value.isBlank();
     }
 }

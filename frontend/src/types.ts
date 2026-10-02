@@ -26,6 +26,21 @@ export interface AuthResponse {
   token: string
 }
 
+// One entry of the "errors" list in a validation error (400): which field broke a rule, and the message to show
+export interface FieldError {
+  field: string
+  message: string
+}
+
+// The backend's error body (Spring's ProblemDetail, RFC 9457). Everything is optional because the body
+// is parsed defensively: a response from the proxy, for example, has none of it.
+export interface ProblemDetail {
+  title?: string
+  status?: number
+  detail?: string
+  errors?: FieldError[]
+}
+
 export interface AddLibraryEntryRequest {
   rawgId: number
   title: string

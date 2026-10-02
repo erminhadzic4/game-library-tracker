@@ -345,6 +345,8 @@ function EditEntryForm({ entry, onSave, onRemove }: EditEntryFormProps) {
           onChange={(e) => setNotes(e.target.value)}
           placeholder="What do you think of it so far?"
           rows={5}
+          // The backend rejects longer notes with a 400
+          maxLength={2000}
         />
       </label>
 

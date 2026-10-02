@@ -17,6 +17,8 @@ export function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  // Field names from the backend's validation errors ("username", "email", "password")
+  const [invalidFields, setInvalidFields] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
 
   if (token) {
@@ -26,6 +28,7 @@ export function RegisterPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
+    setInvalidFields([])
     setSubmitting(true)
     try {
       // Register returns a token, so the user is logged in straight away
@@ -33,10 +36,18 @@ export function RegisterPage() {
       login(response.token, username)
       navigate('/library', { replace: true })
     } catch (err) {
+      // The backend's own message is used when there is one; the fixed texts are the fallback
       if (err instanceof ApiError && err.status === 409) {
-        setError('That username or email is already taken.')
+        // "Username is already taken" or "Email is already registered"
+        setError(err.detail ? `${err.detail}.` : 'That username or email is already taken.')
       } else if (err instanceof ApiError && err.status === 400) {
-        setError('Please fill in all fields.')
+        if (err.fieldErrors.length > 0) {
+          // One sentence per broken rule, and a red border on each field that is named
+          setError(err.fieldErrors.map((fieldError) => `${fieldError.message}.`).join(' '))
+          setInvalidFields(err.fieldErrors.map((fieldError) => fieldError.field))
+        } else {
+          setError('Please fill in all fields.')
+        }
       } else {
         setError('Could not register. Is the backend running?')
       }
@@ -62,6 +73,7 @@ export function RegisterPage() {
         value={username}
         onChange={(e) => setUsername(e.target.value)}
         autoComplete="username"
+        invalid={invalidFields.includes('username')}
         required
       />
       <TextInput
@@ -71,6 +83,7 @@ export function RegisterPage() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         autoComplete="email"
+        invalid={invalidFields.includes('email')}
         required
       />
       <PasswordInput
@@ -78,6 +91,7 @@ export function RegisterPage() {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         autoComplete="new-password"
+        invalid={invalidFields.includes('password')}
         required
       />
       {error && <ErrorBox>{error}</ErrorBox>}

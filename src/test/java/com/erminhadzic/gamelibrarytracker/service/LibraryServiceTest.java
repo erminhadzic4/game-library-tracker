@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
@@ -27,7 +28,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 // Pure unit tests: all three repositories are Mockito mocks, so no Spring context or database
@@ -73,7 +73,7 @@ class LibraryServiceTest {
             return game;
         });
         when(libraryEntryRepository.findByUserAndGame_Id(alice, 10L)).thenReturn(Optional.empty());
-        when(libraryEntryRepository.save(any(LibraryEntry.class))).thenAnswer(inv -> {
+        when(libraryEntryRepository.saveAndFlush(any(LibraryEntry.class))).thenAnswer(inv -> {
             LibraryEntry entry = inv.getArgument(0);
             entry.setId(100L);
             return entry;
@@ -95,7 +95,7 @@ class LibraryServiceTest {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
         when(gameRepository.findByRawgId(3328L)).thenReturn(Optional.of(witcher));
         when(libraryEntryRepository.findByUserAndGame_Id(alice, 10L)).thenReturn(Optional.empty());
-        when(libraryEntryRepository.save(any(LibraryEntry.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(libraryEntryRepository.saveAndFlush(any(LibraryEntry.class))).thenAnswer(inv -> inv.getArgument(0));
 
         LibraryEntryResponse response = libraryService.addEntry("alice",
                 new AddLibraryEntryRequest(3328L, "The Witcher 3: Wild Hunt", null, null, Status.BACKLOG));
@@ -114,19 +114,25 @@ class LibraryServiceTest {
         assertStatus(() -> libraryService.addEntry("alice",
                         new AddLibraryEntryRequest(3328L, "The Witcher 3: Wild Hunt", null, null, Status.BACKLOG)),
                 HttpStatus.CONFLICT);
-        verify(libraryEntryRepository, never()).save(any());
+        verify(libraryEntryRepository, never()).saveAndFlush(any());
     }
 
+    // Two requests add the same game at the same moment: the "already in library" check passes for both,
+    // and the database's unique constraint rejects the second INSERT
     @Test
-    void addEntry_missingFields_returns400() {
+    void addEntry_uniqueConstraintViolationOnSave_returns409() {
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+        when(gameRepository.findByRawgId(3328L)).thenReturn(Optional.of(witcher));
+        when(libraryEntryRepository.findByUserAndGame_Id(alice, 10L)).thenReturn(Optional.empty());
+        when(libraryEntryRepository.saveAndFlush(any(LibraryEntry.class)))
+                .thenThrow(new DataIntegrityViolationException("unique constraint (user_id, game_id)"));
+
         assertStatus(() -> libraryService.addEntry("alice",
-                new AddLibraryEntryRequest(null, "Title", null, null, Status.PLAYING)), HttpStatus.BAD_REQUEST);
-        assertStatus(() -> libraryService.addEntry("alice",
-                new AddLibraryEntryRequest(3328L, " ", null, null, Status.PLAYING)), HttpStatus.BAD_REQUEST);
-        assertStatus(() -> libraryService.addEntry("alice",
-                new AddLibraryEntryRequest(3328L, "Title", null, null, null)), HttpStatus.BAD_REQUEST);
-        verifyNoInteractions(userRepository, gameRepository, libraryEntryRepository);
+                        new AddLibraryEntryRequest(3328L, "The Witcher 3: Wild Hunt", null, null, Status.BACKLOG)),
+                HttpStatus.CONFLICT);
     }
+
+    // Missing or invalid fields are rejected by @Valid before the service runs: see ErrorHandlingIntegrationTest
 
     // --- updateEntry ---
 
@@ -178,22 +184,6 @@ class LibraryServiceTest {
             assertThat(response.notes()).isNull();
             assertThat(response.rating()).isEqualTo(8);
         }
-    }
-
-    @Test
-    void updateEntry_missingStatus_returns400() {
-        assertStatus(() -> libraryService.updateEntry("alice", 100L, new UpdateLibraryEntryRequest(null, 8, "notes")),
-                HttpStatus.BAD_REQUEST);
-        verifyNoInteractions(userRepository, libraryEntryRepository);
-    }
-
-    @Test
-    void updateEntry_ratingOutOfRange_returns400() {
-        assertStatus(() -> libraryService.updateEntry("alice", 100L,
-                new UpdateLibraryEntryRequest(Status.PLAYING, 0, null)), HttpStatus.BAD_REQUEST);
-        assertStatus(() -> libraryService.updateEntry("alice", 100L,
-                new UpdateLibraryEntryRequest(Status.PLAYING, 11, null)), HttpStatus.BAD_REQUEST);
-        verifyNoInteractions(libraryEntryRepository);
     }
 
     @Test
