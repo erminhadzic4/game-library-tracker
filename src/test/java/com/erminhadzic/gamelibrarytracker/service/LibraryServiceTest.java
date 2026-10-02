@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
@@ -27,7 +28,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 // Pure unit tests: all three repositories are Mockito mocks, so no Spring context or database
@@ -73,7 +73,7 @@ class LibraryServiceTest {
             return game;
         });
         when(libraryEntryRepository.findByUserAndGame_Id(alice, 10L)).thenReturn(Optional.empty());
-        when(libraryEntryRepository.save(any(LibraryEntry.class))).thenAnswer(inv -> {
+        when(libraryEntryRepository.saveAndFlush(any(LibraryEntry.class))).thenAnswer(inv -> {
             LibraryEntry entry = inv.getArgument(0);
             entry.setId(100L);
             return entry;
@@ -95,7 +95,7 @@ class LibraryServiceTest {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
         when(gameRepository.findByRawgId(3328L)).thenReturn(Optional.of(witcher));
         when(libraryEntryRepository.findByUserAndGame_Id(alice, 10L)).thenReturn(Optional.empty());
-        when(libraryEntryRepository.save(any(LibraryEntry.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(libraryEntryRepository.saveAndFlush(any(LibraryEntry.class))).thenAnswer(inv -> inv.getArgument(0));
 
         LibraryEntryResponse response = libraryService.addEntry("alice",
                 new AddLibraryEntryRequest(3328L, "The Witcher 3: Wild Hunt", null, null, Status.BACKLOG));
@@ -114,45 +114,76 @@ class LibraryServiceTest {
         assertStatus(() -> libraryService.addEntry("alice",
                         new AddLibraryEntryRequest(3328L, "The Witcher 3: Wild Hunt", null, null, Status.BACKLOG)),
                 HttpStatus.CONFLICT);
-        verify(libraryEntryRepository, never()).save(any());
+        verify(libraryEntryRepository, never()).saveAndFlush(any());
     }
 
+    // Two requests add the same game at the same moment: the "already in library" check passes for both,
+    // and the database's unique constraint rejects the second INSERT
     @Test
-    void addEntry_missingFields_returns400() {
+    void addEntry_uniqueConstraintViolationOnSave_returns409() {
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+        when(gameRepository.findByRawgId(3328L)).thenReturn(Optional.of(witcher));
+        when(libraryEntryRepository.findByUserAndGame_Id(alice, 10L)).thenReturn(Optional.empty());
+        when(libraryEntryRepository.saveAndFlush(any(LibraryEntry.class)))
+                .thenThrow(new DataIntegrityViolationException("unique constraint (user_id, game_id)"));
+
         assertStatus(() -> libraryService.addEntry("alice",
-                new AddLibraryEntryRequest(null, "Title", null, null, Status.PLAYING)), HttpStatus.BAD_REQUEST);
-        assertStatus(() -> libraryService.addEntry("alice",
-                new AddLibraryEntryRequest(3328L, " ", null, null, Status.PLAYING)), HttpStatus.BAD_REQUEST);
-        assertStatus(() -> libraryService.addEntry("alice",
-                new AddLibraryEntryRequest(3328L, "Title", null, null, null)), HttpStatus.BAD_REQUEST);
-        verifyNoInteractions(userRepository, gameRepository, libraryEntryRepository);
+                        new AddLibraryEntryRequest(3328L, "The Witcher 3: Wild Hunt", null, null, Status.BACKLOG)),
+                HttpStatus.CONFLICT);
     }
+
+    // Missing or invalid fields are rejected by @Valid before the service runs: see ErrorHandlingIntegrationTest
 
     // --- updateEntry ---
 
     @Test
-    void updateEntry_ownEntry_appliesOnlyProvidedFields() {
+    void updateEntry_ownEntry_replacesAllEditableFields() {
         LibraryEntry entry = entry(100L, alice, Status.PLAYING, null);
         entry.setNotes("old notes");
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
         when(libraryEntryRepository.findByIdAndUser(100L, alice)).thenReturn(Optional.of(entry));
 
         LibraryEntryResponse response = libraryService.updateEntry("alice", 100L,
-                new UpdateLibraryEntryRequest(Status.COMPLETED, 9, null));
+                new UpdateLibraryEntryRequest(Status.COMPLETED, 9, "  new notes  "));
 
         assertThat(response.status()).isEqualTo(Status.COMPLETED);
         assertThat(response.rating()).isEqualTo(9);
-        // notes was null in the request, so it stays unchanged
-        assertThat(response.notes()).isEqualTo("old notes");
+        // notes are trimmed before they are stored
+        assertThat(response.notes()).isEqualTo("new notes");
     }
 
     @Test
-    void updateEntry_ratingOutOfRange_returns400() {
-        assertStatus(() -> libraryService.updateEntry("alice", 100L, new UpdateLibraryEntryRequest(null, 0, null)),
-                HttpStatus.BAD_REQUEST);
-        assertStatus(() -> libraryService.updateEntry("alice", 100L, new UpdateLibraryEntryRequest(null, 11, null)),
-                HttpStatus.BAD_REQUEST);
-        verifyNoInteractions(libraryEntryRepository);
+    void updateEntry_nullRatingAndNotes_clearsThem() {
+        LibraryEntry entry = entry(100L, alice, Status.PLAYING, 8);
+        entry.setNotes("old notes");
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+        when(libraryEntryRepository.findByIdAndUser(100L, alice)).thenReturn(Optional.of(entry));
+
+        LibraryEntryResponse response = libraryService.updateEntry("alice", 100L,
+                new UpdateLibraryEntryRequest(Status.PLAYING, null, null));
+
+        assertThat(response.status()).isEqualTo(Status.PLAYING);
+        assertThat(response.rating()).isNull();
+        assertThat(response.notes()).isNull();
+        // The entity itself was changed, which is what Hibernate writes when the transaction commits
+        assertThat(entry.getRating()).isNull();
+        assertThat(entry.getNotes()).isNull();
+    }
+
+    @Test
+    void updateEntry_blankNotes_storedAsNull() {
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+        for (String blank : new String[] {"", "   ", " \n\t "}) {
+            LibraryEntry entry = entry(100L, alice, Status.PLAYING, 8);
+            entry.setNotes("old notes");
+            when(libraryEntryRepository.findByIdAndUser(100L, alice)).thenReturn(Optional.of(entry));
+
+            LibraryEntryResponse response = libraryService.updateEntry("alice", 100L,
+                    new UpdateLibraryEntryRequest(Status.PLAYING, 8, blank));
+
+            assertThat(response.notes()).isNull();
+            assertThat(response.rating()).isEqualTo(8);
+        }
     }
 
     @Test
@@ -160,7 +191,7 @@ class LibraryServiceTest {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
         when(libraryEntryRepository.findByIdAndUser(999L, alice)).thenReturn(Optional.empty());
 
-        assertStatus(() -> libraryService.updateEntry("alice", 999L, new UpdateLibraryEntryRequest(null, 8, null)),
+        assertStatus(() -> libraryService.updateEntry("alice", 999L, new UpdateLibraryEntryRequest(Status.PLAYING, 8, null)),
                 HttpStatus.NOT_FOUND);
     }
 
@@ -170,7 +201,7 @@ class LibraryServiceTest {
         when(userRepository.findByUsername("bob")).thenReturn(Optional.of(bob));
         when(libraryEntryRepository.findByIdAndUser(100L, bob)).thenReturn(Optional.empty());
 
-        assertStatus(() -> libraryService.updateEntry("bob", 100L, new UpdateLibraryEntryRequest(null, 1, null)),
+        assertStatus(() -> libraryService.updateEntry("bob", 100L, new UpdateLibraryEntryRequest(Status.PLAYING, 1, null)),
                 HttpStatus.NOT_FOUND);
     }
 

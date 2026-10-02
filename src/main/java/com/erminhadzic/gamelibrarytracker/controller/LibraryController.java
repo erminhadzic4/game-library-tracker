@@ -6,6 +6,7 @@ import com.erminhadzic.gamelibrarytracker.dto.LibraryStatsResponse;
 import com.erminhadzic.gamelibrarytracker.dto.UpdateLibraryEntryRequest;
 import com.erminhadzic.gamelibrarytracker.model.LibraryEntry;
 import com.erminhadzic.gamelibrarytracker.service.LibraryService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,7 +27,7 @@ public class LibraryController {
 
     @PostMapping
     public ResponseEntity<LibraryEntryResponse> add(@AuthenticationPrincipal UserDetails user,
-                                                    @RequestBody AddLibraryEntryRequest request) {
+                                                    @Valid @RequestBody AddLibraryEntryRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(libraryService.addEntry(user.getUsername(), request));
     }
 
@@ -41,10 +42,11 @@ public class LibraryController {
         return libraryService.getStats(user.getUsername());
     }
 
-    @PatchMapping("/{id}")
+    // PUT, not PATCH: the request replaces all editable fields (status, rating, notes) at once
+    @PutMapping("/{id}")
     public LibraryEntryResponse update(@AuthenticationPrincipal UserDetails user,
                                        @PathVariable Long id,
-                                       @RequestBody UpdateLibraryEntryRequest request) {
+                                       @Valid @RequestBody UpdateLibraryEntryRequest request) {
         return libraryService.updateEntry(user.getUsername(), id, request);
     }
 

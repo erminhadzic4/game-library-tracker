@@ -80,17 +80,7 @@ class AuthServiceTest {
         verify(userRepository, never()).save(any());
     }
 
-    @Test
-    void register_missingFields_returns400() {
-        assertStatus(() -> authService.register(new RegisterRequest(null, "alice@test.local", "secret123")),
-                HttpStatus.BAD_REQUEST);
-        assertStatus(() -> authService.register(new RegisterRequest("alice", " ", "secret123")),
-                HttpStatus.BAD_REQUEST);
-        assertStatus(() -> authService.register(new RegisterRequest("alice", "alice@test.local", "")),
-                HttpStatus.BAD_REQUEST);
-        // Validation fails before the database is touched
-        verifyNoInteractions(userRepository);
-    }
+    // Missing or invalid fields are rejected by @Valid before the service runs: see ErrorHandlingIntegrationTest
 
     // --- login ---
 

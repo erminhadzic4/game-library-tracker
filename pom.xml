@@ -47,6 +47,17 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+        <!-- Spring's caching support: @EnableCaching, @Cacheable and the spring.cache.* settings -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <!-- The cache implementation. Spring's default is a plain map that never forgets an entry;
+             Caffeine adds an expiry time and a maximum size. The version is managed by Spring Boot. -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

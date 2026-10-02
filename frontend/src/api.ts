@@ -1,9 +1,11 @@
 import type {
   AddLibraryEntryRequest,
   AuthResponse,
+  FieldError,
   LibraryEntryResponse,
   LibraryStatsResponse,
   LoginRequest,
+  ProblemDetail,
   RawgSearchResponse,
   RegisterRequest,
   Status,
@@ -32,13 +34,38 @@ export function clearSession() {
   localStorage.removeItem(USERNAME_KEY)
 }
 
-// Thrown for any non-2xx response, so pages can show a message based on the status code
+// Thrown for any non-2xx response. Pages decide what to show from the status code;
+// detail and fieldErrors come from the backend's error body when it has one.
 export class ApiError extends Error {
   status: number
+  // The backend's message, e.g. "Username is already taken". null when the body had none.
+  detail: string | null
+  // Filled for a validation error (400); empty otherwise
+  fieldErrors: FieldError[]
 
-  constructor(status: number) {
+  constructor(status: number, problem: ProblemDetail | null = null) {
     super(`Request failed with status ${status}`)
     this.status = status
+    this.detail = typeof problem?.detail === 'string' ? problem.detail : null
+    this.fieldErrors = Array.isArray(problem?.errors) ? problem.errors.filter(isFieldError) : []
+  }
+}
+
+function isFieldError(value: unknown): value is FieldError {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+  const candidate = value as Record<string, unknown>
+  return typeof candidate.field === 'string' && typeof candidate.message === 'string'
+}
+
+// The error body may be empty or not JSON at all (e.g. an HTML page from the proxy when the backend is down)
+async function readProblem(response: Response): Promise<ProblemDetail | null> {
+  try {
+    const body: unknown = await response.json()
+    return typeof body === 'object' && body !== null ? (body as ProblemDetail) : null
+  } catch {
+    return null
   }
 }
 
@@ -67,7 +94,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     onUnauthorized()
   }
   if (!response.ok) {
-    throw new ApiError(response.status)
+    throw new ApiError(response.status, await readProblem(response))
   }
   // 204 No Content (DELETE) has no body to parse
   if (response.status === 204) {
@@ -107,7 +134,7 @@ export function addLibraryEntry(body: AddLibraryEntryRequest) {
 }
 
 export function updateLibraryEntry(id: number, body: UpdateLibraryEntryRequest) {
-  return request<LibraryEntryResponse>(`/api/library/${id}`, { method: 'PATCH', body: JSON.stringify(body) })
+  return request<LibraryEntryResponse>(`/api/library/${id}`, { method: 'PUT', body: JSON.stringify(body) })
 }
 
 export function deleteLibraryEntry(id: number) {

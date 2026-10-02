@@ -26,6 +26,21 @@ export interface AuthResponse {
   token: string
 }
 
+// One entry of the "errors" list in a validation error (400): which field broke a rule, and the message to show
+export interface FieldError {
+  field: string
+  message: string
+}
+
+// The backend's error body (Spring's ProblemDetail, RFC 9457). Everything is optional because the body
+// is parsed defensively: a response from the proxy, for example, has none of it.
+export interface ProblemDetail {
+  title?: string
+  status?: number
+  detail?: string
+  errors?: FieldError[]
+}
+
 export interface AddLibraryEntryRequest {
   rawgId: number
   title: string
@@ -34,11 +49,11 @@ export interface AddLibraryEntryRequest {
   status: Status
 }
 
-// Partial update: a field that is left out stays unchanged on the server
+// Full replacement (PUT): all three fields are always sent. A null rating or notes clears the saved value.
 export interface UpdateLibraryEntryRequest {
-  status?: Status
-  rating?: number
-  notes?: string
+  status: Status
+  rating: number | null
+  notes: string | null
 }
 
 export interface LibraryEntryResponse {

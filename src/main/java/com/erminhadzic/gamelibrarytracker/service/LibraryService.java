@@ -10,6 +10,7 @@ import com.erminhadzic.gamelibrarytracker.model.User;
 import com.erminhadzic.gamelibrarytracker.repository.GameRepository;
 import com.erminhadzic.gamelibrarytracker.repository.LibraryEntryRepository;
 import com.erminhadzic.gamelibrarytracker.repository.UserRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,9 +34,7 @@ public class LibraryService {
 
     @Transactional
     public LibraryEntryResponse addEntry(String username, AddLibraryEntryRequest request) {
-        if (request.rawgId() == null || request.title() == null || request.title().isBlank() || request.status() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "rawgId, title and status are required");
-        }
+        // Required fields and lengths are validated on AddLibraryEntryRequest (@Valid in the controller)
         User user = getUser(username);
 
         // Games are a shared cache: reuse the row if any user has added this RAWG game before
@@ -57,7 +56,15 @@ public class LibraryService {
         entry.setUser(user);
         entry.setGame(game);
         entry.setStatus(request.status());
-        return LibraryEntryResponse.from(libraryEntryRepository.save(entry));
+        try {
+            // saveAndFlush sends the INSERT now, so a unique-constraint violation shows up here and not at commit
+            return LibraryEntryResponse.from(libraryEntryRepository.saveAndFlush(entry));
+        } catch (DataIntegrityViolationException e) {
+            // Two requests added the same game at the same moment: both passed the check above, and the
+            // unique constraint on (user_id, game_id) rejected the second INSERT. The user and game exist and
+            // status is set, so that constraint is the only one this INSERT can break.
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This game is already in your library");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -88,23 +95,15 @@ public class LibraryService {
 
     @Transactional
     public LibraryEntryResponse updateEntry(String username, Long entryId, UpdateLibraryEntryRequest request) {
-        if (request.status() == null && request.rating() == null && request.notes() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Provide at least one of status, rating or notes");
-        }
-        if (request.rating() != null && (request.rating() < 1 || request.rating() > 10)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "rating must be between 1 and 10");
-        }
+        // status required, rating 1-10 and the notes length are validated on UpdateLibraryEntryRequest
         LibraryEntry entry = getOwnedEntry(username, entryId);
 
-        if (request.status() != null) {
-            entry.setStatus(request.status());
-        }
-        if (request.rating() != null) {
-            entry.setRating(request.rating());
-        }
-        if (request.notes() != null) {
-            entry.setNotes(request.notes());
-        }
+        // Full replacement: all three fields are overwritten, so a null rating or notes clears the saved value
+        entry.setStatus(request.status());
+        entry.setRating(request.rating());
+        // Blank or whitespace-only notes are stored as null, so "no notes" has one representation
+        String notes = (request.notes() == null) ? null : request.notes().trim();
+        entry.setNotes((notes == null || notes.isEmpty()) ? null : notes);
         // No save() needed: the entry is managed, so Hibernate writes the changes when the transaction commits
         return LibraryEntryResponse.from(entry);
     }
