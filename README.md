@@ -1,5 +1,7 @@
 # Game Library Tracker
 
+[![CI](https://github.com/erminhadzic4/game-library-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/erminhadzic4/game-library-tracker/actions/workflows/ci.yml)
+
 A full-stack web app for tracking your video game library: a **Java / Spring Boot** REST API with **PostgreSQL** and JWT auth, a **React + TypeScript** frontend, built with **Maven**, tested with **JUnit**, and developed with **Git** feature branches and pull requests.
 
 ![Library page with five stat tiles, status filter pills and a grid of twelve game covers](docs/screenshots/library.png)
@@ -230,6 +232,8 @@ cd frontend
 npm run lint
 npm run build
 ```
+
+**Continuous integration.** A GitHub Actions workflow (`.github/workflows/ci.yml`) runs both checks on every push to `main` and on every pull request, as two parallel jobs: `mvn -B verify` on Java 17 for the backend, and `npm ci`, lint and build on Node 24 for the frontend. It needs no secrets and no database service.
 
 ## Design decisions
 
