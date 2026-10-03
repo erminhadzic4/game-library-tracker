@@ -1,0 +1,57 @@
+name: CI
+
+# Run on every push to main and on every pull request
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# The jobs only read the repository; they never write to it
+permissions:
+  contents: read
+
+# The two jobs have no "needs", so they run in parallel
+jobs:
+  backend:
+    name: Backend (Maven tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Java 17 is the java.version in pom.xml; cache: maven keeps ~/.m2 between runs
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      # Compiles, runs all tests and builds the jar. No secrets and no database service are needed:
+      # the tests use the "test" profile (in-memory H2, dummy JWT secret and RAWG key) and never call the real RAWG API
+      - name: Build and test
+        run: mvn -B verify
+
+  frontend:
+    name: Frontend (lint and build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+
+      # Node 24 is the current LTS and satisfies Vite 8 (20.19+ or 22.12+); the npm cache is keyed on package-lock.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # tsc type-check, then the Vite production build
+      - name: Build
+        run: npm run build
