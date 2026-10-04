@@ -35,6 +35,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
                         // Lets Spring's error page through so e.g. a 409 from /register isn't turned into a 401
                         .requestMatchers("/error").permitAll()
+                        // API documentation: the OpenAPI JSON and Swagger UI (/swagger-ui.html redirects into /swagger-ui/)
+                        .requestMatchers(HttpMethod.GET, "/v3/api-docs", "/v3/api-docs/**",
+                                "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         .anyRequest().authenticated())
                 // Respond 401 (not the default 403) with a JSON error body when a request has no valid token
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint))

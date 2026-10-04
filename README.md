@@ -68,6 +68,7 @@ A full-stack web app for tracking your video game library: a **Java / Spring Boo
 - Spring Boot 4.0.8: Web MVC, Data JPA (Hibernate), Security, Validation, Cache (Caffeine)
 - PostgreSQL
 - JWT with jjwt 0.12.6
+- OpenAPI documentation and Swagger UI with springdoc-openapi 3.0.3
 - Maven (wrapper included)
 - Tests: JUnit 5, Mockito, MockMvc, H2 in-memory database
 
@@ -151,6 +152,8 @@ erDiagram
 
 Endpoints marked "Yes" need an `Authorization: Bearer <token>` header and return `401` without a valid token.
 
+**Interactive documentation.** With the backend running, Swagger UI is at http://localhost:8080/swagger-ui.html and the OpenAPI description (JSON) at http://localhost:8080/v3/api-docs; both are open without a token. To call a protected endpoint from Swagger UI, run `POST /api/auth/login`, copy the token, click **Authorize** and paste it.
+
 The update was a `PATCH` in earlier versions (a null field meant "unchanged", so a rating could never be removed). It is now a `PUT`, and `PATCH /api/library/{id}` returns `405`.
 
 **Error responses.** Every error has the same JSON body, Spring's `ProblemDetail` (RFC 9457), sent as `application/problem+json`. That includes the `401` for a missing token, malformed JSON, a wrong HTTP method and unknown paths. A validation error also lists each field that broke a rule:
@@ -213,11 +216,11 @@ Then open http://localhost:5173. The dev server forwards every `/api` request to
 
 ## Testing
 
-Backend, 91 tests in three layers:
+Backend, 92 tests in three layers:
 
 - **Unit tests** (Mockito) for the services and the game controller: business rules without Spring or a database.
 - **Repository tests** (`@DataJpaTest`) that run the queries as real SQL: ownership filtering, newest-first ordering, the average rating, the unique constraints, and that the list queries load each entry's game in the same query.
-- **Integration tests** (`@SpringBootTest` + MockMvc) of the auth flow, the library flow and the error responses, through the real security filter chain. One more checks the discovery cache by counting the requests that reach a fake RAWG server.
+- **Integration tests** (`@SpringBootTest` + MockMvc) of the auth flow, the library flow and the error responses, through the real security filter chain. One more checks the discovery cache by counting the requests that reach a fake RAWG server, and one that the OpenAPI description is readable without a token.
 
 ```bash
 ./mvnw test
